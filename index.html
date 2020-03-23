@@ -8,7 +8,7 @@
     <meta name="description" content="Cognetik COVID-19 Simulation" />
     <meta name="author" content="Cognetik" />
 
-    <link rel="stylesheet" href="css/styles.css?v=1.1" />
+    <link rel="stylesheet" href="css/styles.css?v=1.2" />
   </head>
 
   <body>
@@ -22,23 +22,23 @@
     <div id="parameters">
       <fieldset>
         <legend>Population</legend>
-        <input id="population" value="327200000" />
+        <input id="population" value="327200000" type="number" />
       </fieldset>
       <fieldset>
         <legend>Initial infections</legend>
-        <input id="infections" value="15219" />
+        <input id="infections" value="15219" type="number" />
       </fieldset>
       <fieldset>
         <legend>r0</legend>
-        <input id="r0" value="2.2" />
+        <input id="r0" value="2.2" type="number" step="0.1" />
       </fieldset>
       <fieldset>
         <legend>Duration (in days)</legend>
-        <input id="duration" value="14" />
+        <input id="duration" value="14" type="number" />
       </fieldset>
       <fieldset>
         <legend>Social Distancing</legend>
-        <input id="socialdistancing" value="0.2" />
+        <input id="socialdistancing" value="0.2" type="number" step="0.1" />
       </fieldset>
       <button onclick="update()">Update</button>
     </div>
@@ -68,6 +68,32 @@
           maintainAspectRatio: false,
           tooltips: {
             mode: 'label',
+            callbacks: {
+              title: function(tooltipItem, data) {
+                return 'Day ' + (tooltipItem[0] || {}).xLabel;
+              },
+              label: function(tooltipItem, data) {
+                var label = data.datasets[tooltipItem.datasetIndex].label || '';
+
+                if (label) {
+                  label += ': ';
+                }
+                label += new Intl.NumberFormat().format(tooltipItem.yLabel);
+                return label;
+              },
+            },
+          },
+          scales: {
+            yAxes: [
+              {
+                ticks: {
+                  // Include a dollar sign in the ticks
+                  callback: function(value, index, values) {
+                    return new Intl.NumberFormat().format(value);
+                  },
+                },
+              },
+            ],
           },
         },
       });

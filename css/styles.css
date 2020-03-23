@@ -13,10 +13,15 @@ fieldset {
 
 input {
   border: 0;
-  width: 98px;
-  height: 20px;
+  width: 100px;
+  font: 16px sans-serif;
 }
 
 button {
-  height: 38px;
+  height: 36px;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  opacity: 1;
 }
