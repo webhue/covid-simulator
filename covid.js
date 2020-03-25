@@ -112,7 +112,15 @@ function getFirstDay(date, startDate, contagiousnessDuration) {
 
 function populateTable(data, startDate) {
   let table = document.getElementById('tbl');
-  table.innerHTML = '';
+  table.innerHTML =
+    '<tr>\
+  <th>Date</th>\
+  <th>Healthy</th>\
+  <th>Infected Today</th>\
+  <th>Total Infected</th>\
+  <th>Healed today</th>\
+  <th>Total Healed</th>\
+</tr>';
 
   for (var key in data) {
     row = data[key];
