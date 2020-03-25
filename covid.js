@@ -16,12 +16,12 @@ function compute(
   };
   startDate = moment(startDate);
 
-  let data = {};
+  var data = {};
   data[startDate] = initialData;
 
-  let breaker = 0;
-  let dataForDay;
-  let currenDay = startDate.clone().add(1, 'days');
+  var breaker = 0;
+  var dataForDay;
+  var currenDay = startDate.clone().add(1, 'days');
   do {
     dataForDay = getInfectedForDay(
       currenDay,
@@ -55,30 +55,30 @@ function getInfectedForDay(
   socialDistancing,
   data,
 ) {
-  const previousDayData = getDataForRelativeDate(date, -1, data);
-  const dataForStartOfInfection = getDataForRelativeDate(
+  var previousDayData = getDataForRelativeDate(date, -1, data);
+  var dataForStartOfInfection = getDataForRelativeDate(
     date,
     -contagiousnessDuration,
     data,
   );
 
-  let healedToday = 0;
+  var healedToday = 0;
   if (dataForStartOfInfection) {
     healedToday = dataForStartOfInfection.infectedToday;
   }
 
-  let chanceToMeetUninfected = previousDayData.healthy / population;
+  var chanceToMeetUninfected = previousDayData.healthy / population;
   // console.log('-', chanceToMeetUninfected);
-  let infectedToday = Math.ceil(
+  var infectedToday = Math.ceil(
     previousDayData.infected *
       (r0 / contagiousnessDuration) *
       chanceToMeetUninfected *
       (1 - socialDistancing),
   );
-  let totalInfected = previousDayData.infected + infectedToday - healedToday;
-  let totalImmunized = previousDayData.immunized + healedToday;
+  var totalInfected = previousDayData.infected + infectedToday - healedToday;
+  var totalImmunized = previousDayData.immunized + healedToday;
 
-  let row = {
+  var row = {
     infected: totalInfected,
     infectedToday: infectedToday,
     immunizedToday: healedToday,
@@ -101,7 +101,7 @@ function getDataForRelativeDate(date, dayCount, data) {
 function getFirstDay(date, startDate, contagiousnessDuration) {
   // Need to look back at the past `contagiousnessDuration` and sum the people that are contagious over this period
   // to find out how many people are totally infected during this window
-  const firstDay = date.clone().subtract(contagiousnessDuration, 'days');
+  var firstDay = date.clone().subtract(contagiousnessDuration, 'days');
 
   if (firstDay < startDate) {
     return startDate;
@@ -111,7 +111,7 @@ function getFirstDay(date, startDate, contagiousnessDuration) {
 }
 
 function populateTable(data, startDate) {
-  let table = document.getElementById('tbl');
+  var table = document.getElementById('tbl');
   table.innerHTML =
     '<tr>\
   <th>Date</th>\
@@ -124,7 +124,7 @@ function populateTable(data, startDate) {
 
   for (var key in data) {
     row = data[key];
-    let content =
+    var content =
       '<td>' +
       key +
       '</td><td>' +
@@ -146,7 +146,7 @@ function populateTable(data, startDate) {
 }
 
 function updateChart(data) {
-  let graphData = {
+  var graphData = {
     infected: [],
     infectedToday: [],
     immunized: [],
@@ -160,7 +160,7 @@ function updateChart(data) {
     // Loop through each date
     if (data.hasOwnProperty(key)) {
       row = data[key];
-      for (let attribute in row) {
+      for (var attribute in row) {
         graphData[attribute].push(row[attribute]);
       }
     }
