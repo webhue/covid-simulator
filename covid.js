@@ -36,11 +36,7 @@ function compute(
     // console.log(dataForDay);
     currenDay = currenDay.clone().add(1, 'days');
     breaker++;
-  } while (
-    dataForDay.infectedToday > 0 &&
-    dataForDay.healthy > 0 &&
-    breaker < 200
-  );
+  } while (dataForDay.infectedToday > 1 && breaker < 1000);
 
   populateTable(data, startDate);
   updateChart(data);
@@ -170,20 +166,20 @@ function updateChart(data) {
   // myChart.data.datasets[0].data = graphData['infected'];
   myChart.data.datasets = [];
   myChart.data.datasets.push(
-    chartDataset('Infected', graphData['infected'], 'rgba(255, 99, 132, 0.5)'),
+    chartDataset('Infected', graphData['infected'], 'rgba(223, 83, 52, 0.5)'),
   );
   myChart.data.datasets.push(
     chartDataset(
       'Susceptible',
       graphData['healthy'],
-      'rgba(130, 99, 232, 0.5)',
+      'rgba(145, 86, 155, 0.5)',
     ),
   );
   myChart.data.datasets.push(
     chartDataset(
       'Immunized',
       graphData['immunized'],
-      'rgba(130, 200, 132, 0.5)',
+      'rgba(126, 192, 155, 0.5)',
     ),
   );
   myChart.update();
@@ -215,6 +211,6 @@ function update() {
     0,
     Number(document.getElementById('r0').value),
     Number(document.getElementById('duration').value),
-    Number(document.getElementById('socialdistancing').value),
+    Number(document.getElementById('socialdistancing').value) / 100,
   );
 }
