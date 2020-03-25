@@ -112,6 +112,7 @@ function getFirstDay(date, startDate, contagiousnessDuration) {
 
 function populateTable(data, startDate) {
   let table = document.getElementById('tbl');
+  table.innerHTML = '';
 
   for (var key in data) {
     row = data[key];
@@ -132,6 +133,8 @@ function populateTable(data, startDate) {
     newRow = table.insertRow();
     newRow.innerHTML = content;
   }
+
+  tableExport.reset();
 }
 
 function updateChart(data) {
