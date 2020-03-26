@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+
+    <title>Cognetik COVID-19 simulator</title>
+    <meta name="description" content="Cognetik COVID-19 Simulation" />
+    <meta name="author" content="Cognetik" />
+
+    <link rel="stylesheet" href="css/styles.css?v=1.8" />
+  </head>
+
+  <body>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"
+      integrity="sha256-4iQZ6BVL4qNKlQ27TExEhBN1HFPvAvAMbFavKKosSWQ="
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+    <script src="https://unpkg.com/file-saverjs@1.3.6/FileSaver.js"></script>
+    <script src="https://unpkg.com/tableexport@5.2.0/dist/js/tableexport.js"></script>
+    <script src="covid.js?v=1.8"></script>
+    <div id="parameters">
+      <fieldset>
+        <legend>r0</legend>
+        <input id="r0" value="2.2" type="number" step="0.1" min="0" />
+        <label for="r0">How many others an infected person will infect</label>
+      </fieldset>
+      <fieldset>
+        <legend>Duration (in days)</legend>
+        <input id="duration" value="14" type="number" min="1" />
+        <label for="duration">Contagiousness duration</label>
+      </fieldset>
+      <fieldset>
+        <legend>Social Distancing (percent)</legend>
+        <input
+          id="socialdistancing"
+          value="10"
+          type="number"
+          step="5"
+          min="0"
+          max="100"
+        />
+        <label for="socialdistancing">Effectiveness of social distancing</label>
+      </fieldset>
+      <button onclick="update(stateData)">Update</button>
+    </div>
+    <table id="tbl"></table>
+
+    <script>
+      var tableExport = new TableExport(document.getElementById('tbl'), {
+        formats: ['csv'],
+        position: 'top',
+        filename: 'cognetik-covid-19-simulator',
+      });
+
+      var stateData = [
+        {
+          '': 0,
+          state: 'OH',
+          cases: 575,
+          population: 11689100,
+        },
+        {
+          '': 1,
+          state: 'DC',
+          cases: 143,
+          population: 705749,
+        },
+        {
+          '': 2,
+          state: 'WV',
+          cases: 22,
+          population: 1787147,
+        },
+        {
+          '': 3,
+          state: 'MS',
+          cases: 321,
+          population: 2976149,
+        },
+        {
+          '': 4,
+          state: 'DE',
+          cases: 104,
+          population: 973764,
+        },
+        {
+          '': 5,
+          state: 'MI',
+          cases: 1817,
+          population: 9986857,
+        },
+        {
+          '': 6,
+          state: 'RI',
+          cases: 124,
+          population: 1059361,
+        },
+        {
+          '': 7,
+          state: 'NV',
+          cases: 282,
+          population: 3080156,
+        },
+        {
+          '': 8,
+          state: 'NE',
+          cases: 66,
+          population: 1934408,
+        },
+        {
+          '': 9,
+          state: 'WA',
+          cases: 2444,
+          population: 7614893,
+        },
+        {
+          '': 10,
+          state: 'WI',
+          cases: 486,
+          population: 5822434,
+        },
+        {
+          '': 11,
+          state: 'OK',
+          cases: 109,
+          population: 3956971,
+        },
+        {
+          '': 12,
+          state: 'NJ',
+          cases: 3719,
+          population: 8882190,
+        },
+        {
+          '': 13,
+          state: 'UT',
+          cases: 299,
+          population: 3205958,
+        },
+        {
+          '': 14,
+          state: 'VA',
+          cases: 302,
+          population: 8535519,
+        },
+        {
+          '': 15,
+          state: 'NY',
+          cases: 25891,
+          population: 19453561,
+        },
+        {
+          '': 16,
+          state: 'CA',
+          cases: 2588,
+          population: 39512223,
+        },
+        {
+          '': 17,
+          state: 'MN',
+          cases: 262,
+          population: 5639632,
+        },
+        {
+          '': 18,
+          state: 'TX',
+          cases: 967,
+          population: 28995881,
+        },
+        {
+          '': 19,
+          state: 'AZ',
+          cases: 331,
+          population: 7278717,
+        },
+        {
+          '': 20,
+          state: 'NC',
+          cases: 495,
+          population: 10488084,
+        },
+        {
+          '': 21,
+          state: 'NM',
+          cases: 100,
+          population: 2096829,
+        },
+        {
+          '': 22,
+          state: 'IN',
+          cases: 380,
+          population: 6732219,
+        },
+        {
+          '': 23,
+          state: 'AK',
+          cases: 34,
+          population: 731545,
+        },
+        {
+          '': 24,
+          state: 'GA',
+          cases: 1058,
+          population: 10617423,
+        },
+        {
+          '': 25,
+          state: 'VT',
+          cases: 102,
+          population: 623989,
+        },
+        {
+          '': 26,
+          state: 'ID',
+          cases: 81,
+          population: 1792065,
+        },
+        {
+          '': 27,
+          state: 'MA',
+          cases: 1170,
+          population: 6949503,
+        },
+        {
+          '': 28,
+          state: 'SD',
+          cases: 31,
+          population: 884659,
+        },
+        {
+          '': 29,
+          state: 'LA',
+          cases: 1434,
+          population: 4648794,
+        },
+        {
+          '': 30,
+          state: 'SC',
+          cases: 347,
+          population: 5148714,
+        },
+        {
+          '': 31,
+          state: 'KS',
+          cases: 102,
+          population: 2913314,
+        },
+        {
+          '': 32,
+          state: 'AL',
+          cases: 242,
+          population: 4903185,
+        },
+        {
+          '': 33,
+          state: 'KY',
+          cases: 166,
+          population: 4467673,
+        },
+        {
+          '': 34,
+          state: 'GU',
+          cases: 33,
+          population: 165718,
+        },
+        {
+          '': 35,
+          state: 'MT',
+          cases: 51,
+          population: 1068778,
+        },
+        {
+          '': 36,
+          state: 'CO',
+          cases: 731,
+          population: 5758736,
+        },
+        {
+          '': 37,
+          state: 'IL',
+          cases: 1553,
+          population: 12671821,
+        },
+        {
+          '': 38,
+          state: 'NH',
+          cases: 102,
+          population: 1359711,
+        },
+        {
+          '': 39,
+          state: 'MO',
+          cases: 264,
+          population: 6137428,
+        },
+        {
+          '': 40,
+          state: 'PA',
+          cases: 954,
+          population: 12801989,
+        },
+        {
+          '': 41,
+          state: 'IA',
+          cases: 124,
+          population: 3155070,
+        },
+        {
+          '': 42,
+          state: 'HI',
+          cases: 91,
+          population: 1415872,
+        },
+        {
+          '': 43,
+          state: 'MD',
+          cases: 353,
+          population: 6045680,
+        },
+        {
+          '': 44,
+          state: 'WY',
+          cases: 29,
+          population: 578759,
+        },
+        {
+          '': 45,
+          state: 'AR',
+          cases: 221,
+          population: 3017825,
+        },
+        {
+          '': 46,
+          state: 'OR',
+          cases: 218,
+          population: 4217737,
+        },
+        {
+          '': 47,
+          state: 'ND',
+          cases: 36,
+          population: 762062,
+        },
+        {
+          '': 48,
+          state: 'FL',
+          cases: 1430,
+          population: 21477737,
+        },
+        {
+          '': 49,
+          state: 'TN',
+          cases: 774,
+          population: 6833174,
+        },
+        {
+          '': 50,
+          state: 'ME',
+          cases: 118,
+          population: 1344212,
+        },
+      ];
+    </script>
+  </body>
+</html>

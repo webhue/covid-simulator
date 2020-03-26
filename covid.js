@@ -6,6 +6,7 @@ function compute(
   r0,
   contagiousnessDuration,
   socialDistancing,
+  state,
 ) {
   initialData = {
     infected: infectedOnStartDate,
@@ -36,9 +37,9 @@ function compute(
     // console.log(dataForDay);
     currenDay = currenDay.clone().add(1, 'days');
     breaker++;
-  } while (dataForDay.infectedToday > 1 && breaker < 1000);
+  } while (dataForDay.infectedToday > 1 && breaker < 300);
 
-  populateTable(data, startDate);
+  populateTable(data, startDate, state);
   updateChart(data);
 }
 
@@ -106,24 +107,16 @@ function getFirstDay(date, startDate, contagiousnessDuration) {
   return firstDay;
 }
 
-function populateTable(data, startDate) {
+function populateTable(data, startDate, state) {
   var table = document.getElementById('tbl');
-  table.innerHTML =
-    '<tr>\
-  <th>Date</th>\
-  <th>Healthy</th>\
-  <th>Infected Today</th>\
-  <th>Total Infected</th>\
-  <th>Healed today</th>\
-  <th>Total Healed</th>\
-</tr>';
 
   for (var key in data) {
     row = data[key];
     var content =
       '<td>' +
-      key +
+      moment(key).format('YYYY-MM-DD') +
       '</td><td>' +
+      (state ? state + '</td><td>' : '') +
       row.healthy +
       '</td><td>' +
       row.infectedToday +
@@ -137,11 +130,13 @@ function populateTable(data, startDate) {
     newRow = table.insertRow();
     newRow.innerHTML = content;
   }
-
-  tableExport.reset();
 }
 
 function updateChart(data) {
+  if (!window.myChart) {
+    return;
+  }
+
   var graphData = {
     infected: [],
     infectedToday: [],
@@ -195,22 +190,41 @@ function chartDataset(name, data, color) {
   };
 }
 
-document.addEventListener(
-  'DOMContentLoaded',
-  function() {
-    update();
-  },
-  false,
-);
+function update(listParam) {
+  var list =
+    listParam && listParam.length
+      ? listParam
+      : [
+          {
+            state: '',
+            population: Number(document.getElementById('population').value),
+            cases: Number(document.getElementById('infections').value),
+          },
+        ];
 
-function update() {
-  compute(
-    '2020-03-20',
-    Number(document.getElementById('population').value),
-    Number(document.getElementById('infections').value),
-    0,
-    Number(document.getElementById('r0').value),
-    Number(document.getElementById('duration').value),
-    Number(document.getElementById('socialdistancing').value) / 100,
-  );
+  document.getElementById('tbl').innerHTML =
+    '<tr>\
+      <th>Date</th>' +
+    ((list[0] || {}).state ? '<th>State</th>' : '') +
+    '<th>Healthy</th>\
+      <th>Infected Today</th>\
+      <th>Total Infected</th>\
+      <th>Healed today</th>\
+      <th>Total Healed</th>\
+    </tr>';
+
+  list.forEach(function(item) {
+    compute(
+      '2020-03-20',
+      item.population,
+      item.cases,
+      0,
+      Number(document.getElementById('r0').value),
+      Number(document.getElementById('duration').value),
+      Number(document.getElementById('socialdistancing').value) / 100,
+      item.state,
+    );
+  });
+
+  tableExport.reset();
 }

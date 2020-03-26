@@ -8,7 +8,7 @@
     <meta name="description" content="Cognetik COVID-19 Simulation" />
     <meta name="author" content="Cognetik" />
 
-    <link rel="stylesheet" href="css/styles.css?v=1.7" />
+    <link rel="stylesheet" href="css/styles.css?v=1.8" />
   </head>
 
   <body>
@@ -20,7 +20,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
     <script src="https://unpkg.com/file-saverjs@1.3.6/FileSaver.js"></script>
     <script src="https://unpkg.com/tableexport@5.2.0/dist/js/tableexport.js"></script>
-    <script src="covid.js?v=1.7"></script>
+    <script src="covid.js?v=1.8"></script>
     <div id="parameters">
       <fieldset>
         <legend>Population</legend>
@@ -125,6 +125,14 @@
         position: 'top',
         filename: 'cognetik-covid-19-simulator',
       });
+
+      document.addEventListener(
+        'DOMContentLoaded',
+        function() {
+          update();
+        },
+        false,
+      );
     </script>
   </body>
 </html>
