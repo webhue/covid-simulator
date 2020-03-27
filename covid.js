@@ -1,193 +1,154 @@
+// Susceptible equation
+function dS_dt(S, I, R_t, T_inf) {
+  return -(R_t / T_inf) * I * S;
+}
+
+// Exposed equation
+function dE_dt(S, E, I, R_t, T_inf, T_inc) {
+  return (R_t / T_inf) * I * S - Math.pow(T_inc, -1) * E;
+}
+
+// Infected equation
+function dI_dt(I, E, T_inc, T_inf) {
+  return Math.pow(T_inc, -1) * E - Math.pow(T_inf, -1) * I;
+}
+
+// Recovered equation
+function dR_dt(I, T_inf) {
+  return Math.pow(T_inf, -1) * I;
+}
+
+function SEIR_model(t, y, R_t, T_inf, T_inc) {
+  var S = y.S;
+  var E = y.E;
+  var I = y.I;
+  var R = y.R;
+  var reproduction = R_t;
+
+  S_out = dS_dt(S, I, reproduction, T_inf);
+  E_out = dE_dt(S, E, I, reproduction, T_inf, T_inc);
+  I_out = dI_dt(I, E, T_inc, T_inf);
+  R_out = dR_dt(I, T_inf);
+
+  return {
+    S: S_out,
+    E: E_out,
+    I: I_out,
+    R: R_out,
+  };
+}
+
 function compute(
-  startDate,
   population,
   infectedOnStartDate,
-  immunizedOnStartDate,
   r0,
-  contagiousnessDuration,
-  socialDistancing,
-  state,
+  incubationTime,
+  recoveryTime,
+  maxDays,
 ) {
-  initialData = {
-    infected: infectedOnStartDate,
-    infectedToday: infectedOnStartDate,
-    immunized: immunizedOnStartDate,
-    immunizedToday: 0,
-    healthy: population - infectedOnStartDate - immunizedOnStartDate,
+  var N = population;
+  var n_infected = infectedOnStartDate;
+
+  var last = {
+    S: (N - n_infected) / N,
+    E: 0,
+    I: n_infected / N,
+    R: 0,
   };
-  startDate = moment(startDate);
+  var total = [last];
 
-  var data = {};
-  data[startDate] = initialData;
+  for (var i = 0; i < maxDays; i++) {
+    var result = SEIR_model(i, last, r0, recoveryTime, incubationTime);
+    last = {
+      S: last.S + result.S,
+      E: last.E + result.E,
+      I: last.I + result.I,
+      R: last.R + result.R,
+    };
+    total.push(last);
 
-  var breaker = 0;
-  var dataForDay;
-  var currenDay = startDate.clone().add(1, 'days');
-  do {
-    dataForDay = getInfectedForDay(
-      currenDay,
-      startDate,
-      contagiousnessDuration,
-      population,
-      r0,
-      socialDistancing,
-      data,
-    );
-    data[currenDay] = dataForDay;
-    // console.log(dataForDay);
-    currenDay = currenDay.clone().add(1, 'days');
-    breaker++;
-  } while (dataForDay.infectedToday > 1 && breaker < 300);
-
-  populateTable(data, startDate, state);
-  updateChart(data);
-}
-
-function getInfectedForDay(
-  date,
-  startDate,
-  contagiousnessDuration,
-  population,
-  r0,
-  socialDistancing,
-  data,
-) {
-  var previousDayData = getDataForRelativeDate(date, -1, data);
-  var dataForStartOfInfection = getDataForRelativeDate(
-    date,
-    -contagiousnessDuration,
-    data,
-  );
-
-  var healedToday = 0;
-  if (dataForStartOfInfection) {
-    healedToday = dataForStartOfInfection.infectedToday;
+    // Stop when noone else is exposed
+    if (last.E * N < 1) {
+      break;
+    }
   }
 
-  var chanceToMeetUninfected = previousDayData.healthy / population;
-  // console.log('-', chanceToMeetUninfected);
-  var infectedToday = Math.ceil(
-    previousDayData.infected *
-      (r0 / contagiousnessDuration) *
-      chanceToMeetUninfected *
-      (1 - socialDistancing),
-  );
-  var totalInfected = previousDayData.infected + infectedToday - healedToday;
-  var totalImmunized = previousDayData.immunized + healedToday;
+  return total;
+}
 
-  var row = {
-    infected: totalInfected,
-    infectedToday: infectedToday,
-    immunizedToday: healedToday,
-    immunized: previousDayData.immunized + healedToday,
-    healthy: population - totalInfected - totalImmunized,
+function annotateData(result, N, infectedOnStartDate, startDate) {
+  var last = {
+    I: infectedOnStartDate,
+    R: 0,
   };
 
-  return row;
+  return result.map(function(x, i) {
+    const data = {
+      S: Math.round(x.S * N),
+      E: Math.round(x.E * N),
+      I: Math.round(x.I * N),
+      R: Math.round(x.R * N),
+      date: startDate.add(i, 'days').format('YYYY-MM-DD'),
+    };
+
+    // For backward compatibility
+    data.recoveredToday = data.R - last.R;
+    data.infectedToday = data.I - last.I + data.recoveredToday;
+    data.healthy = N - data.I - data.R;
+
+    last = data;
+
+    return data;
+  });
 }
 
-function getDataForRelativeDate(date, dayCount, data) {
-  date = date.clone().add(dayCount, 'days');
-  if (typeof data[date] != 'undefined') {
-    return data[date];
-  }
-
-  return null;
+function drawChart(chart, data) {
+  chart.options.scales.xAxes[0].ticks.max = data.length;
+  ['S', 'E', 'I', 'R'].forEach(function(x, i) {
+    chart.data.datasets[i].data = data.map(function(y) {
+      return y[x];
+    });
+  });
+  chart.update();
 }
 
-function getFirstDay(date, startDate, contagiousnessDuration) {
-  // Need to look back at the past `contagiousnessDuration` and sum the people that are contagious over this period
-  // to find out how many people are totally infected during this window
-  var firstDay = date.clone().subtract(contagiousnessDuration, 'days');
-
-  if (firstDay < startDate) {
-    return startDate;
-  }
-
-  return firstDay;
-}
-
-function populateTable(data, startDate, state) {
-  var table = document.getElementById('tbl');
-
-  for (var key in data) {
-    row = data[key];
-    var content =
+function populateTable(table, data, state) {
+  data.forEach(function(row, i) {
+    newRow = table.insertRow();
+    newRow.innerHTML =
       '<td>' +
-      moment(key).format('YYYY-MM-DD') +
+      row.date +
       '</td><td>' +
       (state ? state + '</td><td>' : '') +
       row.healthy +
       '</td><td>' +
+      row.S +
+      '</td><td>' +
+      row.E +
+      '</td><td>' +
+      row.I +
+      '</td><td>' +
       row.infectedToday +
       '</td><td>' +
-      row.infected +
+      row.R +
       '</td><td>' +
-      row.immunizedToday +
-      '</td><td>' +
-      row.immunized +
+      row.recoveredToday +
       '</td>';
-    newRow = table.insertRow();
-    newRow.innerHTML = content;
-  }
+  });
 }
 
-function updateChart(data) {
-  if (!window.myChart) {
-    return;
-  }
-
-  var graphData = {
-    infected: [],
-    infectedToday: [],
-    immunized: [],
-    immunizedToday: [],
-    healthy: [],
-    label: [],
-  };
-
-  position = 0;
-  for (var key in data) {
-    // Loop through each date
-    if (data.hasOwnProperty(key)) {
-      row = data[key];
-      for (var attribute in row) {
-        graphData[attribute].push(row[attribute]);
-      }
-    }
-    graphData['label'].push(++position);
-  }
-  myChart.data.labels = graphData['label'];
-  // myChart.data.datasets[0].data = graphData['infected'];
-  myChart.data.datasets = [];
-  myChart.data.datasets.push(
-    chartDataset('Infected', graphData['infected'], 'rgba(223, 83, 52, 0.5)'),
+function exportCsv() {
+  var data = tableExport.reset().getExportData();
+  var csvData = data.tbl.csv;
+  tableExport.export2file(
+    csvData.data,
+    csvData.mimeType,
+    csvData.filename,
+    csvData.fileExtension,
+    csvData.merges,
+    csvData.RTL,
+    csvData.sheetname,
   );
-  myChart.data.datasets.push(
-    chartDataset(
-      'Susceptible',
-      graphData['healthy'],
-      'rgba(145, 86, 155, 0.5)',
-    ),
-  );
-  myChart.data.datasets.push(
-    chartDataset(
-      'Immunized',
-      graphData['immunized'],
-      'rgba(126, 192, 155, 0.5)',
-    ),
-  );
-  myChart.update();
-}
-
-function chartDataset(name, data, color) {
-  return {
-    label: name,
-    data: data,
-    backgroundColor: Array(data.length).fill(color),
-    barPercentage: 1.0,
-    categoryPercentage: 1.0,
-  };
 }
 
 function update(listParam) {
@@ -202,29 +163,41 @@ function update(listParam) {
           },
         ];
 
-  document.getElementById('tbl').innerHTML =
+  var table = document.getElementById('tbl');
+  table.innerHTML =
     '<tr>\
       <th>Date</th>' +
     ((list[0] || {}).state ? '<th>State</th>' : '') +
     '<th>Healthy</th>\
-      <th>Infected Today</th>\
-      <th>Total Infected</th>\
-      <th>Healed today</th>\
-      <th>Total Healed</th>\
+    <th>Suspectible</th>\
+      <th>Exposed</th>\
+      <th>Infected</th>\
+      <th>Infected today</th>\
+      <th>Recovered</th>\
+      <th>Recovered today</th>\
     </tr>';
 
   list.forEach(function(item) {
-    compute(
-      '2020-03-20',
+    var result = compute(
       item.population,
       item.cases,
-      0,
       Number(document.getElementById('r0').value),
       Number(document.getElementById('duration').value),
-      Number(document.getElementById('socialdistancing').value) / 100,
-      item.state,
+      Number(document.getElementById('recovery').value),
+      MAX_DAYS || 200,
     );
-  });
 
-  tableExport.reset();
+    var data = annotateData(
+      result,
+      item.population,
+      item.cases,
+      moment('2020-03-20'),
+    );
+
+    if (window.myChart) {
+      drawChart(window.myChart, data);
+    }
+
+    populateTable(table, data, item.state);
+  });
 }

@@ -8,7 +8,7 @@
     <meta name="description" content="Cognetik COVID-19 Simulation" />
     <meta name="author" content="Cognetik" />
 
-    <link rel="stylesheet" href="css/styles.css?v=1.8" />
+    <link rel="stylesheet" href="css/styles.css?v=2.0" />
   </head>
 
   <body>
@@ -20,7 +20,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
     <script src="https://unpkg.com/file-saverjs@1.3.6/FileSaver.js"></script>
     <script src="https://unpkg.com/tableexport@5.2.0/dist/js/tableexport.js"></script>
-    <script src="covid.js?v=1.8"></script>
+    <script src="covid.js?v=2.0"></script>
     <div id="parameters">
       <fieldset>
         <legend>Population</legend>
@@ -44,42 +44,62 @@
         <label for="r0">How many others an infected person will infect</label>
       </fieldset>
       <fieldset>
-        <legend>Duration (in days)</legend>
-        <input id="duration" value="14" type="number" min="1" />
-        <label for="duration">Contagiousness duration</label>
+        <legend>Incubation period (days)</legend>
+        <input id="duration" value="5.2" type="number" step="0.1" min="1" />
+        <label for="duration">Time between first symptoms and exposure</label>
       </fieldset>
       <fieldset>
-        <legend>Social Distancing (percent)</legend>
-        <input
-          id="socialdistancing"
-          value="10"
-          type="number"
-          step="5"
-          min="0"
-          max="100"
-        />
-        <label for="socialdistancing">Effectiveness of social distancing</label>
+        <legend>Recovery period (days)</legend>
+        <input id="recovery" value="2.9" type="number" step="0.1" min="1" />
+        <label for="recovery">Time between exposure and recovery/death</label>
       </fieldset>
       <button onclick="update()">Update</button>
     </div>
     <div class="chart">
       <canvas id="myChart"></canvas>
     </div>
+    <button id="export" onClick="exportCsv()">Export to CSV</button>
     <table id="tbl"></table>
 
     <script>
+      var MAX_DAYS = 365;
       var ctx = document.getElementById('myChart').getContext('2d');
       var myChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: [],
-          datasets: [],
+          datasets: [
+            {
+              label: 'Suspectible',
+              data: [],
+              backgroundColor: 'rgba(85, 139, 197, 0.5)',
+              barPercentage: 1.0,
+              categoryPercentage: 1.0,
+            },
+            {
+              label: 'Exposed',
+              data: [],
+              backgroundColor: 'rgba(145, 86, 155, 0.5)',
+              barPercentage: 1.0,
+              categoryPercentage: 1.0,
+            },
+            {
+              label: 'Infected',
+              data: [],
+              backgroundColor: 'rgba(223, 83, 52, 0.5)',
+              barPercentage: 1.0,
+              categoryPercentage: 1.0,
+            },
+            {
+              label: 'Recovered',
+              data: [],
+              backgroundColor: 'rgba(126, 192, 155, 0.5)',
+              barPercentage: 1.0,
+              categoryPercentage: 1.0,
+            },
+          ],
         },
         options: {
           maintainAspectRatio: false,
-          animation: {
-            duration: 0,
-          },
           tooltips: {
             mode: 'index',
             intersect: false,
@@ -102,7 +122,6 @@
             yAxes: [
               {
                 ticks: {
-                  // Include a dollar sign in the ticks
                   callback: function(value, index, values) {
                     return new Intl.NumberFormat().format(value);
                   },
@@ -111,6 +130,10 @@
             ],
             xAxes: [
               {
+                labels: Array.from(Array(MAX_DAYS).keys()),
+                ticks: {
+                  max: MAX_DAYS,
+                },
                 gridLines: {
                   display: false,
                 },
@@ -122,8 +145,8 @@
 
       var tableExport = new TableExport(document.getElementById('tbl'), {
         formats: ['csv'],
-        position: 'top',
         filename: 'cognetik-covid-19-simulator',
+        exportButtons: false,
       });
 
       document.addEventListener(

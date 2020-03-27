@@ -8,7 +8,7 @@
     <meta name="description" content="Cognetik COVID-19 Simulation" />
     <meta name="author" content="Cognetik" />
 
-    <link rel="stylesheet" href="css/styles.css?v=1.8" />
+    <link rel="stylesheet" href="css/styles.css?v=2.0" />
   </head>
 
   <body>
@@ -20,7 +20,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
     <script src="https://unpkg.com/file-saverjs@1.3.6/FileSaver.js"></script>
     <script src="https://unpkg.com/tableexport@5.2.0/dist/js/tableexport.js"></script>
-    <script src="covid.js?v=1.8"></script>
+    <script src="covid.js?v=2.0"></script>
     <div id="parameters">
       <fieldset>
         <legend>r0</legend>
@@ -28,31 +28,27 @@
         <label for="r0">How many others an infected person will infect</label>
       </fieldset>
       <fieldset>
-        <legend>Duration (in days)</legend>
-        <input id="duration" value="14" type="number" min="1" />
-        <label for="duration">Contagiousness duration</label>
+        <legend>Incubation period (days)</legend>
+        <input id="duration" value="5.2" type="number" step="0.1" min="1" />
+        <label for="duration">Time between first symptoms and exposure</label>
       </fieldset>
       <fieldset>
-        <legend>Social Distancing (percent)</legend>
-        <input
-          id="socialdistancing"
-          value="10"
-          type="number"
-          step="5"
-          min="0"
-          max="100"
-        />
-        <label for="socialdistancing">Effectiveness of social distancing</label>
+        <legend>Recovery period (days)</legend>
+        <input id="recovery" value="2.9" type="number" step="0.1" min="1" />
+        <label for="recovery">Time between exposure and recovery/death</label>
       </fieldset>
       <button onclick="update(stateData)">Update</button>
     </div>
+    <button id="export" onClick="exportCsv()">Export to CSV</button>
     <table id="tbl"></table>
 
     <script>
+      var MAX_DAYS = 365;
+
       var tableExport = new TableExport(document.getElementById('tbl'), {
         formats: ['csv'],
-        position: 'top',
         filename: 'cognetik-covid-19-simulator',
+        exportButtons: false,
       });
 
       var stateData = [
