@@ -88,7 +88,9 @@ function annotateData(result, N, infectedOnStartDate, startDate) {
       E: Math.round(x.E * N),
       I: Math.round(x.I * N),
       R: Math.round(x.R * N),
-      date: startDate.add(i, 'days').format('YYYY-MM-DD'),
+      date: moment(startDate)
+        .add(i, 'days')
+        .format('YYYY-MM-DD'),
     };
 
     // For backward compatibility
