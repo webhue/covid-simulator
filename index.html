@@ -8,7 +8,7 @@
     <meta name="description" content="Cognetik COVID-19 Simulation" />
     <meta name="author" content="Cognetik" />
 
-    <link rel="stylesheet" href="css/styles.css?v=2.1" />
+    <link rel="stylesheet" href="css/styles.css?v=2.2" />
   </head>
 
   <body>
@@ -20,7 +20,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
     <script src="https://unpkg.com/file-saverjs@1.3.6/FileSaver.js"></script>
     <script src="https://unpkg.com/tableexport@5.2.0/dist/js/tableexport.js"></script>
-    <script src="covid.js?v=2.1"></script>
+    <script src="covid.js?v=2.2"></script>
     <div id="parameters">
       <fieldset>
         <legend>Population</legend>
@@ -53,95 +53,118 @@
         <input id="recovery" value="2.9" type="number" step="0.1" min="1" />
         <label for="recovery">Time between exposure and recovery/death</label>
       </fieldset>
-      <button onclick="update()">Update</button>
+      <button onClick="update()">Update</button>
     </div>
     <div class="chart">
       <canvas id="myChart"></canvas>
     </div>
-    <button id="export" onClick="exportCsv()">Export to CSV</button>
+    <button id="export" onClick="exportCsv()">Export table to CSV</button>
+    <button id="toggleChart" onClick="toggleChart()">
+      Toggle chart type
+    </button>
     <table id="tbl"></table>
 
     <script>
       var MAX_DAYS = 365;
       var ctx = document.getElementById('myChart').getContext('2d');
-      var myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          datasets: [
-            {
-              label: 'Suspectible',
-              data: [],
-              backgroundColor: 'rgba(85, 139, 197, 0.5)',
-              barPercentage: 1.0,
-              categoryPercentage: 1.0,
-            },
-            {
-              label: 'Exposed',
-              data: [],
-              backgroundColor: 'rgba(145, 86, 155, 0.5)',
-              barPercentage: 1.0,
-              categoryPercentage: 1.0,
-            },
-            {
-              label: 'Infected',
-              data: [],
-              backgroundColor: 'rgba(223, 83, 52, 0.5)',
-              barPercentage: 1.0,
-              categoryPercentage: 1.0,
-            },
-            {
-              label: 'Recovered',
-              data: [],
-              backgroundColor: 'rgba(126, 192, 155, 0.5)',
-              barPercentage: 1.0,
-              categoryPercentage: 1.0,
-            },
-          ],
-        },
-        options: {
-          maintainAspectRatio: false,
-          tooltips: {
-            mode: 'index',
-            intersect: false,
-            callbacks: {
-              title: function(tooltipItem, data) {
-                return 'Day ' + (tooltipItem[0] || {}).xLabel;
-              },
-              label: function(tooltipItem, data) {
-                var label = data.datasets[tooltipItem.datasetIndex].label || '';
+      var myChart;
 
-                if (label) {
-                  label += ': ';
-                }
-                label += new Intl.NumberFormat().format(tooltipItem.yLabel);
-                return label;
+      function createChart(type) {
+        var ticks = MAX_DAYS;
+        var datasets = [
+          {
+            label: 'Suspectible',
+            data: [],
+            backgroundColor: 'rgba(85, 139, 197, 0.5)',
+            barPercentage: 1.0,
+            categoryPercentage: 1.0,
+          },
+          {
+            label: 'Exposed',
+            data: [],
+            backgroundColor: 'rgba(145, 86, 155, 0.5)',
+            barPercentage: 1.0,
+            categoryPercentage: 1.0,
+          },
+          {
+            label: 'Infected',
+            data: [],
+            backgroundColor: 'rgba(223, 83, 52, 0.5)',
+            barPercentage: 1.0,
+            categoryPercentage: 1.0,
+          },
+          {
+            label: 'Recovered',
+            data: [],
+            backgroundColor: 'rgba(126, 192, 155, 0.5)',
+            barPercentage: 1.0,
+            categoryPercentage: 1.0,
+          },
+        ];
+
+        if (myChart) {
+          datasets = myChart.config.data.datasets;
+          ticks = myChart.options.scales.xAxes[0].ticks.max;
+          myChart.destroy();
+        }
+
+        myChart = new Chart(ctx, {
+          type: type,
+          data: {
+            datasets: datasets,
+          },
+          options: {
+            maintainAspectRatio: false,
+            tooltips: {
+              mode: 'index',
+              intersect: false,
+              callbacks: {
+                title: function(tooltipItem, data) {
+                  return 'Day ' + (tooltipItem[0] || {}).xLabel;
+                },
+                label: function(tooltipItem, data) {
+                  var label =
+                    data.datasets[tooltipItem.datasetIndex].label || '';
+
+                  if (label) {
+                    label += ': ';
+                  }
+                  label += new Intl.NumberFormat().format(tooltipItem.yLabel);
+                  return label;
+                },
               },
             },
-          },
-          scales: {
-            yAxes: [
-              {
-                ticks: {
-                  callback: function(value, index, values) {
-                    return new Intl.NumberFormat().format(value);
+            scales: {
+              yAxes: [
+                {
+                  ticks: {
+                    callback: function(value, index, values) {
+                      return new Intl.NumberFormat().format(value);
+                    },
                   },
                 },
-              },
-            ],
-            xAxes: [
-              {
-                labels: Array.from(Array(MAX_DAYS).keys()),
-                ticks: {
-                  max: MAX_DAYS,
+              ],
+              xAxes: [
+                {
+                  labels: Array.from(Array(MAX_DAYS).keys()),
+                  ticks: {
+                    max: ticks,
+                  },
+                  gridLines: {
+                    display: false,
+                  },
                 },
-                gridLines: {
-                  display: false,
-                },
-              },
-            ],
+              ],
+            },
           },
-        },
-      });
+        });
+      }
+      createChart('bar');
+
+      function toggleChart() {
+        var newType = myChart.config.type === 'bar' ? 'line' : 'bar';
+        createChart(newType);
+      }
 
       var tableExport = new TableExport(document.getElementById('tbl'), {
         formats: ['csv'],

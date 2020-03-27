@@ -179,6 +179,8 @@ function update(listParam) {
       <th>Recovered today</th>\
     </tr>';
 
+  var e = document.getElementById('selectedState');
+  var selectedState = e ? e.options[e.selectedIndex].value : '';
   list.forEach(function(item) {
     var result = compute(
       item.population,
@@ -196,7 +198,7 @@ function update(listParam) {
       moment('2020-03-20'),
     );
 
-    if (window.myChart) {
+    if (selectedState === item.state) {
       drawChart(window.myChart, data);
     }
 
